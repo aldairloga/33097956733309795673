@@ -109,190 +109,179 @@
             color: red;
         }
     </style>
-    <script type="module">
-        // Importar las funciones necesarias de Firebase
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.18.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/9.18.0/firebase-firestore.js";
-        
-        // Configuración de Firebase
-        const firebaseConfig = {
-            apiKey: "AIzaSyBx7q2SS8OSHe5NuyikTScf0BOGGLRTRQw",
-            authDomain: "pedidos3309795673.firebaseapp.com",
-            projectId: "pedidos3309795673",
-            storageBucket: "pedidos3309795673.appspot.com",
-            messagingSenderId: "391140431601",
-            appId: "1:391140431601:web:e4a1a25db8144aa5b2bb50",
-            measurementId: "G-QGXWLE7XV0"
-        };
-
-        // Inicializar Firebase
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-
-        // Cargar los ítems desde Firestore al cargar la página
-        async function loadItems() {
-            const querySnapshot = await getDocs(collection(db, "items"));
-            querySnapshot.forEach((doc) => {
-                const data = doc.data();
-                const newItem = document.createElement('div');
-                newItem.className = 'new-item not-assigned';
-                newItem.setAttribute('data-type', data.type);
-
-                newItem.innerHTML = `
-                    <img src="${data.image}" alt="Imagen de la película/serie">
-                    <div>
-                        <h2>${data.title} (${data.type})</h2>
-                        <p>Año: ${data.year}</p>
-                        <p>Género: ${data.genre}</p>
-                        <p>Solicitado por: ${data.userName}</p>
-                        <div class="status">Estado: ${data.status}</div>
-                        <button onclick="markAsInProgress(this)">Marcar como en proceso</button>
-                        <button onclick="rejectItem(this)">Rechazar</button>
-                        <div class="observation">Observación: <span class="text"></span></div>
-                    </div>
-                `;
-
-                document.getElementById('new-items-section').appendChild(newItem);
-            });
-        }
-
-        // Ejecutar loadItems al cargar la página
-        window.onload = loadItems;
-
-        // Agregar nuevo contenido
-        document.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('new-item-form').addEventListener('submit', async function(event) {
-                event.preventDefault();
-
-                const userName = document.getElementById('user-name').value;
-                const type = document.getElementById('item-type').value;
-                const title = document.getElementById('item-title').value;
-                const year = document.getElementById('item-year').value;
-                const genre = document.getElementById('item-genre').value;
-                const image = document.getElementById('item-image').value;
-
-                const newItem = {
-                    userName: userName,
-                    type: type,
-                    title: title,
-                    year: year,
-                    genre: genre,
-                    image: image,
-                    status: "No asignado"
-                };
-
-                // Guardar en Firestore
-                try {
-                    await addDoc(collection(db, "items"), newItem);
-                    alert("Nuevo contenido agregado!");
-                } catch (e) {
-                    console.error("Error agregando documento: ", e);
-                }
-
-                // Limpiar el formulario
-                document.getElementById('user-name').value = '';
-                document.getElementById('item-type').value = '';
-                document.getElementById('item-title').value = '';
-                document.getElementById('item-year').value = '';
-                document.getElementById('item-genre').value = '';
-                document.getElementById('item-image').value = '';
-                document.getElementById('new-item-form').style.display = 'none';
-
-                // Cargar los ítems de nuevo
-                loadItems();
-            });
-        });
-
-        // Filtrar ítems
-        document.getElementById('filter-type').addEventListener('change', filterItems);
-
-        function filterItems() {
-            const filter = document.getElementById('filter-type').value;
-            const items = document.querySelectorAll('.new-item');
-
-            items.forEach(item => {
-                if (filter === 'all' || item.getAttribute('data-type') === filter) {
-                    item.style.display = 'flex'; // Mostrar
-                } else {
-                    item.style.display = 'none'; // Ocultar
-                }
-            });
-        }
-
-        // Marcar como en proceso
-        function markAsInProgress(button) {
-            const password = prompt("Introduce la contraseña para cambiar el estado:");
-            const item = button.parentElement.parentElement;
-
-            if (password === "148233") {
-                const statusText = item.querySelector('.status');
-
-                if (item.classList.contains('not-assigned')) {
-                    item.classList.remove('not-assigned');
-                    item.classList.add('in-progress'); // Cambiar a estado en proceso
-                    statusText.innerHTML = "Estado: En proceso"; // Actualizar estado
-                    item.style.backgroundColor = "#fff3cd"; // Color amarillo
-                    alert("Pedido marcado como en proceso.");
-                } else {
-                    alert("Este pedido ya está en proceso.");
-                }
-            } else {
-                alert("Contraseña incorrecta.");
-            }
-        }
-
-        // Rechazar
-        function rejectItem(button) {
-            const password = prompt("Introduce la contraseña para rechazar el pedido:");
-            const item = button.parentElement.parentElement;
-
-            if (password === "148233") {
-                const statusText = item.querySelector('.status');
-                const observation = item.querySelector('.observation');
-                const observationText = prompt("Introduce la observación para el rechazo:");
-
-                if (observationText) {
-                    observation.querySelector('.text').innerText = observationText;
-                    observation.style.display = 'block'; // Mostrar observación
-                    item.classList.remove('not-assigned', 'in-progress');
-                    item.classList.add('rejected'); // Cambiar a estado rechazado
-                    statusText.innerHTML = "Estado: Rechazado"; // Actualizar estado
-                    item.style.backgroundColor = "#f8d7da"; // Color rojo
-                    alert("Pedido rechazado.");
-                }
-            } else {
-                alert("Contraseña incorrecta.");
-            }
-        }
-    </script>
+    <!-- Importar las librerías de Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-analytics.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js"></script>
 </head>
 <body>
-    <div class="container">
-        <h1>Lo Más Nuevo</h1>
-        <div class="filter">
-            <label for="filter-type">Filtrar por tipo:</label>
-            <select id="filter-type">
-                <option value="all">Todos</option>
-                <option value="película">Película</option>
-                <option value="serie">Serie</option>
-            </select>
-        </div>
-        <div id="new-items-section"></div>
 
-        <form id="new-item-form" style="display: flex;">
-            <input type="text" id="user-name" placeholder="Tu nombre" required>
-            <select id="item-type" required>
-                <option value="">Selecciona tipo</option>
-                <option value="película">Película</option>
-                <option value="serie">Serie</option>
-            </select>
-            <input type="text" id="item-title" placeholder="Título" required>
-            <input type="number" id="item-year" placeholder="Año" required>
-            <input type="text" id="item-genre" placeholder="Género" required>
-            <input type="text" id="item-image" placeholder="URL de la imagen" required>
-            <input type="submit" value="Agregar nuevo ítem">
-        </form>
+<div class="container">
+    <h1>Lo Más Nuevo</h1>
+
+    <div class="filter">
+        <label for="filter-type">Filtrar por tipo:</label>
+        <select id="filter-type">
+            <option value="all">Todo</option>
+            <option value="pelicula">Películas</option>
+            <option value="serie">Series</option>
+        </select>
     </div>
+
+    <div id="new-items-section">
+        <!-- Aquí se agregarán los nuevos pedidos -->
+    </div>
+
+    <button onclick="toggleForm()">Agregar nuevo contenido</button>
+
+    <form id="new-item-form" style="display: none;">
+        <h2>Agregar nuevo contenido</h2>
+        <input type="text" id="user-name" placeholder="Tu nombre" required>
+        <select id="item-type" required>
+            <option value="">Seleccione tipo</option>
+            <option value="pelicula">Película</option>
+            <option value="serie">Serie</option>
+        </select>
+        <input type="text" id="item-title" placeholder="Título del nuevo contenido" required>
+        <input type="number" id="item-year" placeholder="Año de lanzamiento" required>
+        <input type="text" id="item-genre" placeholder="Género" required>
+        <input type="text" id="item-image" placeholder="URL de la imagen" required>
+        <input type="submit" value="Agregar">
+    </form>
+</div>
+
+<script>
+// Importar funciones de Firebase
+import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
+import { getFirestore, collection, addDoc, onSnapshot } from "firebase/firestore";
+
+// Tu configuración de Firebase
+const firebaseConfig = {
+    apiKey: "AIzaSyBx7q2SS8OSHe5NuyikTScf0BOGGLRTRQw",
+    authDomain: "pedidos3309795673.firebaseapp.com",
+    projectId: "pedidos3309795673",
+    storageBucket: "pedidos3309795673.appspot.com",
+    messagingSenderId: "391140431601",
+    appId: "1:391140431601:web:e4a1a25db8144aa5b2bb50",
+    measurementId: "G-QGXWLE7XV0"
+};
+
+// Inicializar Firebase
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
+const db = getFirestore(app);
+
+// Función para cargar los pedidos desde Firestore
+function loadItems() {
+    const itemsRef = collection(db, "items");
+    onSnapshot(itemsRef, (snapshot) => {
+        const itemsSection = document.getElementById('new-items-section');
+        itemsSection.innerHTML = ''; // Limpiar la sección antes de agregar los nuevos elementos
+
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            const newItem = document.createElement('div');
+            newItem.className = 'new-item not-assigned';
+            newItem.setAttribute('data-type', data.type);
+
+            newItem.innerHTML = `
+                <img src="${data.image}" alt="Imagen de la película/serie">
+                <div>
+                    <h2>${data.title} (${data.type})</h2>
+                    <p>Año: ${data.year}</p>
+                    <p>Género: ${data.genre}</p>
+                    <p>Solicitado por: ${data.userName}</p>
+                    <div class="status">Estado: No asignado</div>
+                    <button onclick="markAsInProgress(this)">Marcar como en proceso</button>
+                    <button onclick="rejectItem(this)">Rechazar</button>
+                    <div class="observation">Observación: <span class="text"></span></div>
+                </div>
+            `;
+
+            itemsSection.appendChild(newItem);
+        });
+    });
+}
+
+// Llamar a la función para cargar los pedidos
+loadItems();
+
+function toggleForm() {
+    const form = document.getElementById('new-item-form');
+    form.style.display = form.style.display === 'none' ? 'flex' : 'none';
+}
+
+document.getElementById('new-item-form').addEventListener('submit', async function(event) {
+    event.preventDefault();
+
+    const userName = document.getElementById('user-name').value;
+    const type = document.getElementById('item-type').value;
+    const title = document.getElementById('item-title').value;
+    const year = document.getElementById('item-year').value;
+    const genre = document.getElementById('item-genre').value;
+    const image = document.getElementById('item-image').value;
+
+    // Agregar el nuevo ítem a Firestore
+    try {
+        await addDoc(collection(db, "items"), {
+            userName,
+            type,
+            title,
+            year,
+            genre,
+            image
+        });
+
+        // Limpiar el formulario
+        document.getElementById('user-name').value = '';
+        document.getElementById('item-type').value = '';
+        document.getElementById('item-title').value = '';
+        document.getElementById('item-year').value = '';
+        document.getElementById('item-genre').value = '';
+        document.getElementById('item-image').value = '';
+
+        document.getElementById('new-item-form').style.display = 'none';
+    } catch (e) {
+        console.error("Error agregando el documento: ", e);
+    }
+});
+
+// Funciones para marcar estado
+function markAsInProgress(button) {
+    const itemDiv = button.closest('.new-item');
+    itemDiv.classList.remove('not-assigned');
+    itemDiv.classList.add('in-progress');
+    const statusDiv = itemDiv.querySelector('.status');
+    statusDiv.textContent = "Estado: En proceso";
+    button.style.display = 'none'; // Ocultar el botón
+}
+
+function rejectItem(button) {
+    const itemDiv = button.closest('.new-item');
+    itemDiv.classList.remove('not-assigned', 'in-progress');
+    itemDiv.classList.add('rejected');
+    const statusDiv = itemDiv.querySelector('.status');
+    statusDiv.textContent = "Estado: Rechazado";
+    const observationDiv = itemDiv.querySelector('.observation');
+    observationDiv.style.display = 'block';
+    observationDiv.querySelector('.text').textContent = "Rechazado por falta de información."; // Puedes agregar más lógica aquí
+}
+
+// Filtrar por tipo
+document.getElementById('filter-type').addEventListener('change', function() {
+    const selectedType = this.value;
+    const items = document.querySelectorAll('.new-item');
+    items.forEach(item => {
+        const itemType = item.getAttribute('data-type');
+        if (selectedType === 'all' || itemType === selectedType) {
+            item.style.display = 'flex';
+        } else {
+            item.style.display = 'none';
+        }
+    });
+});
+</script>
+
 </body>
 </html>
-
