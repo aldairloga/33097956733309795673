@@ -238,18 +238,24 @@
         const item = button.parentElement.parentElement;
 
         if (password === "148233") {
-            const observation = prompt("Escribe una observación para el rechazo:");
-            item.classList.remove('not-assigned', 'in-progress');
-            item.classList.add('rejected'); // Cambiar a estado rechazado
-            item.querySelector('.status').innerHTML = "Estado: Rechazado"; // Actualizar estado
-            item.style.backgroundColor = "#f8d7da"; // Color rojo claro
-            item.querySelector('.observation .text').textContent = observation; // Mostrar observación
-            item.querySelector('.observation').style.display = 'block'; // Mostrar observación
-            alert("Pedido rechazado.");
+            const statusText = item.querySelector('.status');
+            const observation = item.querySelector('.observation');
+            const observationText = prompt("Introduce la observación para el rechazo:");
+
+            if (observationText) {
+                observation.querySelector('.text').innerText = observationText;
+                observation.style.display = 'block'; // Mostrar observación
+                item.classList.remove('not-assigned', 'in-progress');
+                item.classList.add('rejected'); // Cambiar a estado rechazado
+                statusText.innerHTML = "Estado: Rechazado"; // Actualizar estado
+                item.style.backgroundColor = "#f8d7da"; // Color rojo
+                alert("Pedido rechazado.");
+            }
         } else {
             alert("Contraseña incorrecta.");
         }
     }
 </script>
+
 </body>
 </html>
