@@ -109,10 +109,9 @@
             color: red;
         }
     </style>
-    <!-- Importar las librerías de Firebase -->
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-analytics.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js"></script>
+    <!-- Import Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore.js"></script>
 </head>
 <body>
 
@@ -151,12 +150,7 @@
 </div>
 
 <script>
-// Importar funciones de Firebase
-import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
-import { getFirestore, collection, addDoc, onSnapshot } from "firebase/firestore";
-
-// Tu configuración de Firebase
+// Firebase Configuration
 const firebaseConfig = {
     apiKey: "AIzaSyBx7q2SS8OSHe5NuyikTScf0BOGGLRTRQw",
     authDomain: "pedidos3309795673.firebaseapp.com",
@@ -167,51 +161,17 @@ const firebaseConfig = {
     measurementId: "G-QGXWLE7XV0"
 };
 
-// Inicializar Firebase
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
-const db = getFirestore(app);
+// Initialize Firebase
+const app = firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
 
-// Función para cargar los pedidos desde Firestore
-function loadItems() {
-    const itemsRef = collection(db, "items");
-    onSnapshot(itemsRef, (snapshot) => {
-        const itemsSection = document.getElementById('new-items-section');
-        itemsSection.innerHTML = ''; // Limpiar la sección antes de agregar los nuevos elementos
-
-        snapshot.forEach(doc => {
-            const data = doc.data();
-            const newItem = document.createElement('div');
-            newItem.className = 'new-item not-assigned';
-            newItem.setAttribute('data-type', data.type);
-
-            newItem.innerHTML = `
-                <img src="${data.image}" alt="Imagen de la película/serie">
-                <div>
-                    <h2>${data.title} (${data.type})</h2>
-                    <p>Año: ${data.year}</p>
-                    <p>Género: ${data.genre}</p>
-                    <p>Solicitado por: ${data.userName}</p>
-                    <div class="status">Estado: No asignado</div>
-                    <button onclick="markAsInProgress(this)">Marcar como en proceso</button>
-                    <button onclick="rejectItem(this)">Rechazar</button>
-                    <div class="observation">Observación: <span class="text"></span></div>
-                </div>
-            `;
-
-            itemsSection.appendChild(newItem);
-        });
-    });
-}
-
-// Llamar a la función para cargar los pedidos
-loadItems();
-
+// Toggle Form Visibility
 function toggleForm() {
     const form = document.getElementById('new-item-form');
     form.style.display = form.style.display === 'none' ? 'flex' : 'none';
 }
 
+// Submit Form and Add Item to Firestore
 document.getElementById('new-item-form').addEventListener('submit', async function(event) {
     event.preventDefault();
 
@@ -222,9 +182,9 @@ document.getElementById('new-item-form').addEventListener('submit', async functi
     const genre = document.getElementById('item-genre').value;
     const image = document.getElementById('item-image').value;
 
-    // Agregar el nuevo ítem a Firestore
     try {
-        await addDoc(collection(db, "items"), {
+        // Agregar el nuevo ítem a Firestore
+        await db.collection("items").add({
             userName,
             type,
             title,
@@ -242,45 +202,85 @@ document.getElementById('new-item-form').addEventListener('submit', async functi
         document.getElementById('item-image').value = '';
 
         document.getElementById('new-item-form').style.display = 'none';
+
+        // Recargar los ítems después de agregar
+        loadItems();
     } catch (e) {
         console.error("Error agregando el documento: ", e);
     }
 });
 
-// Funciones para marcar estado
-function markAsInProgress(button) {
-    const itemDiv = button.closest('.new-item');
-    itemDiv.classList.remove('not-assigned');
-    itemDiv.classList.add('in-progress');
-    const statusDiv = itemDiv.querySelector('.status');
-    statusDiv.textContent = "Estado: En proceso";
-    button.style.display = 'none'; // Ocultar el botón
-}
+// Filter Items
+document.getElementById('filter-type').addEventListener('change', filterItems);
 
-function rejectItem(button) {
-    const itemDiv = button.closest('.new-item');
-    itemDiv.classList.remove('not-assigned', 'in-progress');
-    itemDiv.classList.add('rejected');
-    const statusDiv = itemDiv.querySelector('.status');
-    statusDiv.textContent = "Estado: Rechazado";
-    const observationDiv = itemDiv.querySelector('.observation');
-    observationDiv.style.display = 'block';
-    observationDiv.querySelector('.text').textContent = "Rechazado por falta de información."; // Puedes agregar más lógica aquí
-}
-
-// Filtrar por tipo
-document.getElementById('filter-type').addEventListener('change', function() {
-    const selectedType = this.value;
+function filterItems() {
+    const filter = document.getElementById('filter-type').value;
     const items = document.querySelectorAll('.new-item');
+
     items.forEach(item => {
-        const itemType = item.getAttribute('data-type');
-        if (selectedType === 'all' || itemType === selectedType) {
-            item.style.display = 'flex';
+        if (filter === 'all' || item.getAttribute('data-type') === filter) {
+            item.style.display = 'flex'; // Mostrar
         } else {
-            item.style.display = 'none';
+            item.style.display = 'none'; // Ocultar
         }
     });
-});
+}
+
+// Load Items from Firestore
+async function loadItems() {
+    const itemsContainer = document.getElementById('new-items-section');
+    itemsContainer.innerHTML = ''; // Limpiar la sección
+
+    const querySnapshot = await db.collection("items").get();
+    querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        const newItem = document.createElement('div');
+        newItem.className = 'new-item not-assigned';
+        newItem.setAttribute('data-type', data.type);
+
+        newItem.innerHTML = `
+            <img src="${data.image}" alt="Imagen de la película/serie">
+            <div>
+                <h2>${data.title} (${data.type})</h2>
+                <p>Año: ${data.year}</p>
+                <p>Género: ${data.genre}</p>
+                <p>Solicitado por: ${data.userName}</p>
+                <div class="status">Estado: No asignado</div>
+                <button onclick="markAsInProgress(this)">Marcar como en proceso</button>
+                <button onclick="rejectItem(this)">Rechazar</button>
+                <div class="observation">Observación: <span class="text"></span></div>
+            </div>
+        `;
+        
+        itemsContainer.appendChild(newItem);
+    });
+}
+
+// Mark Item as In Progress
+function markAsInProgress(button) {
+    const newItem = button.closest('.new-item');
+    newItem.classList.remove('not-assigned');
+    newItem.classList.add('in-progress');
+    newItem.querySelector('.status').innerText = 'Estado: En proceso';
+    button.style.display = 'none'; // Ocultar el botón de marcar en proceso
+}
+
+// Reject Item
+function rejectItem(button) {
+    const newItem = button.closest('.new-item');
+    const observation = prompt("Escribe la razón del rechazo:");
+    if (observation) {
+        newItem.classList.remove('not-assigned', 'in-progress');
+        newItem.classList.add('rejected');
+        newItem.querySelector('.status').innerText = 'Estado: Rechazado';
+        newItem.querySelector('.observation .text').innerText = observation;
+        newItem.querySelector('.observation').style.display = 'block';
+        button.style.display = 'none'; // Ocultar el botón de rechazar
+    }
+}
+
+// Cargar los ítems al cargar la página
+window.onload = loadItems;
 </script>
 
 </body>
